@@ -1,0 +1,100 @@
+{
+  "theme": "LIGHT",
+  "archetype": "1 - Organic & Earthy (Modified: Vibrant Utility)",
+  "vibe": "Uber-style utility app. Extremely straightforward, high-contrast, large touch targets, minimal visual noise, map-centric when applicable.",
+  "typography": {
+    "font_family": "Figtree, ui-sans-serif, system-ui, sans-serif",
+    "hierarchy": {
+      "h1_screen_title": "text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900",
+      "h2_section_title": "text-lg sm:text-xl font-bold tracking-tight text-gray-900",
+      "body_main": "text-base font-medium text-gray-800",
+      "body_secondary": "text-sm font-medium text-gray-500",
+      "button_text": "text-lg font-bold tracking-wide"
+    }
+  },
+  "colors": {
+    "primary": {
+      "hex": "#C8F135",
+      "usage": "Main CTAs, Primary Actions (e.g., 'Solicitar Recolección', 'Confirmar'). MUST use black text (text-black or text-gray-900) on top for contrast."
+    },
+    "secondary": {
+      "hex": "#2BBFB3",
+      "usage": "Recycler specific actions, progress indicators, active states, map markers. Use white text (text-white) on top for contrast."
+    },
+    "backgrounds": {
+      "app": "bg-gray-50",
+      "surface": "bg-white",
+      "input": "bg-gray-100"
+    },
+    "text": {
+      "primary": "text-gray-900",
+      "secondary": "text-gray-500",
+      "muted": "text-gray-400"
+    },
+    "status": {
+      "PENDING": "bg-gray-100 text-gray-700 border-gray-200",
+      "ACCEPTED": "bg-[#2BBFB3]/10 text-[#2BBFB3] border-[#2BBFB3]/20",
+      "IN_PROGRESS": "bg-blue-50 text-blue-600 border-blue-200",
+      "EVIDENCE_UPLOADED": "bg-purple-50 text-purple-600 border-purple-200",
+      "COMPLETED": "bg-[#C8F135]/20 text-gray-900 border-[#C8F135]"
+    }
+  },
+  "layout": {
+    "strategy": "Mobile-First App Shell. The entire application MUST be constrained to a mobile viewport even on desktop.",
+    "app_shell_classes": "w-full max-w-md mx-auto h-[100dvh] bg-gray-50 relative overflow-hidden flex flex-col shadow-2xl sm:border sm:border-gray-200",
+    "spacing": "Use generous padding: p-4 or p-6 for main containers. Gap-4 between list items.",
+    "navigation": "Use a fixed Bottom Navigation Bar for main routing (Home, History, Profile). No complex sidebars.",
+    "modals": "Slide-up Bottom Sheets (rounded-t-3xl) instead of centered modals, for an app-native feel."
+  },
+  "components": {
+    "buttons": {
+      "primary": "w-full h-14 rounded-2xl bg-[#C8F135] text-gray-900 font-bold text-lg flex items-center justify-center transition-transform active:scale-95 disabled:opacity-50",
+      "secondary": "w-full h-14 rounded-2xl bg-[#2BBFB3] text-white font-bold text-lg flex items-center justify-center transition-transform active:scale-95 disabled:opacity-50",
+      "outline": "w-full h-14 rounded-2xl bg-white border-2 border-gray-200 text-gray-900 font-bold text-lg flex items-center justify-center active:bg-gray-50"
+    },
+    "cards": {
+      "base": "bg-white rounded-2xl border border-gray-100 shadow-sm p-4 or p-5",
+      "interactive": "hover:border-[#2BBFB3]/50 transition-colors active:bg-gray-50"
+    },
+    "inputs": {
+      "text": "w-full h-14 rounded-xl bg-gray-100 border-transparent px-4 text-base font-medium text-gray-900 placeholder-gray-500 focus:bg-white focus:border-[#2BBFB3] focus:ring-2 focus:ring-[#2BBFB3]/20 transition-all",
+      "file": "w-full h-32 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center text-gray-500 focus:border-[#2BBFB3] focus:bg-[#2BBFB3]/5"
+    },
+    "map": {
+      "container": "w-full h-full min-h-[300px] rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative z-0"
+    },
+    "bottom_nav": {
+      "container": "fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 pb-safe px-6 flex justify-around items-center h-16 sm:h-20 z-50",
+      "item_active": "text-[#2BBFB3] flex flex-col items-center gap-1",
+      "item_inactive": "text-gray-400 flex flex-col items-center gap-1 hover:text-gray-600"
+    }
+  },
+  "interactions": {
+    "transitions": "Use fast, snappy transitions. transition-all duration-200 ease-out.",
+    "loading": "Use simple pulsing elements or standard Lucide-React Loader2 spinning.",
+    "hover": "Since it is mobile-first, rely more on active states (active:scale-95, active:bg-gray-100) than hover states."
+  },
+  "media": {
+    "icons": "lucide-react",
+    "images": {
+      "splash_background": {
+        "url": "https://images.unsplash.com/photo-1503596476-1c12a8ba09a9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwyfHxwZW9wbGUlMjByZWN5Y2xpbmclMjBtb2Rlcm58ZW58MHx8fHwxNzc1MjU3NjUwfDA&ixlib=rb-4.1.0&q=85",
+        "usage": "Can be used as an atmospheric background for the initial Auth/Splash screen, with a heavy white or black overlay (bg-white/80 or bg-black/60) to keep text readable."
+      }
+    }
+  },
+  "accessibility_and_testing": {
+    "testing_attributes": "All buttons, links, and form inputs MUST include a data-testid attribute formatted as kebab-case based on their role (e.g., data-testid='login-submit-button', data-testid='request-pickup-button').",
+    "contrast": "Ensure white text is only used on #2BBFB3 or dark backgrounds. Ensure black text is used on #C8F135. Do not use pure transparent headers if content scrolls behind them; use backdrop-blur-md bg-white/80."
+  },
+  "instructions_to_main_agent": [
+    "TECH STACK: React (or Next.js), Tailwind CSS, Lucide React, React Leaflet (for maps), Supabase (Auth, DB, Storage).",
+    "UX FOCUS: One primary action per screen. Huge CTA buttons. Minimal forms.",
+    "MOBILE APP SHELL: Wrap the root layout in `<div className='w-full max-w-md mx-auto h-[100dvh] relative flex flex-col bg-gray-50 overflow-hidden sm:border sm:shadow-2xl'>`. Everything must happen inside this container to simulate a native app on desktop.",
+    "MAP INTEGRATION: Use Leaflet (`react-leaflet`) for displaying request locations. Ensure the map does not overlap with fixed bottom navigation or bottom sheets.",
+    "CAMERA/GPS: For the recycler's 'Subir Evidencia' flow, use standard HTML5 `<input type='file' accept='image/*' capture='environment' />` to trigger the camera, and `navigator.geolocation.getCurrentPosition` for GPS coords.",
+    "SUPABASE AUTH: Ensure persistent session is maintained. Role distinction (USER vs RECYCLER) must happen at sign-up and control the routing (Home Hogar vs Home Reciclador).",
+    "STATE ENUM: Adhere strictly to these states: PENDING, ACCEPTED, IN_PROGRESS, EVIDENCE_UPLOADED, COMPLETED.",
+    "DO NOT USE MOCK DATA. Use actual Supabase calls."
+  ]
+}
