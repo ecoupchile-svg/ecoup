@@ -1,53 +1,144 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { Toaster } from 'sonner';
+import { AuthPage } from '@/pages/AuthPage';
+import { HomePage } from '@/pages/HomePage';
+import { CreateRequestPage } from '@/pages/CreateRequestPage';
+import { RequestDetailPage } from '@/pages/RequestDetailPage';
+import { UploadEvidencePage } from '@/pages/UploadEvidencePage';
+import { HistoryPage } from '@/pages/HistoryPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import { Loader2 } from 'lucide-react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Componente para rutas protegidas
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="w-full h-[100dvh] flex items-center justify-center bg-gray-50">
+        <Loader2 size={48} className="text-[#2BBFB3] animate-spin" />
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
+  return children;
 };
+
+// Componente para rutas públicas (solo accesibles si NO está autenticado)
+const PublicRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="w-full h-[100dvh] flex items-center justify-center bg-gray-50">
+        <Loader2 size={48} className="text-[#2BBFB3] animate-spin" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Navigate to="/home" replace />;
+  }
+
+  return children;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Ruta pública - Auth */}
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <AuthPage />
+          </PublicRoute>
+        }
+      />
+
+      {/* Rutas protegidas */}
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/create-request"
+        element={
+          <ProtectedRoute>
+            <CreateRequestPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/request/:id"
+        element={
+          <ProtectedRoute>
+            <RequestDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/upload-evidence/:id"
+        element={
+          <ProtectedRoute>
+            <UploadEvidencePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <HistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Ruta por defecto */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
-    <div className="App">
+    <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
+        <AppRoutes />
+        <Toaster 
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: 'white',
+              color: '#111827',
+              border: '1px solid #e5e7eb',
+              borderRadius: '1rem',
+              padding: '1rem',
+              fontSize: '0.875rem',
+              fontWeight: '600'
+            }
+          }}
+        />
       </BrowserRouter>
-    </div>
+    </AuthProvider>
   );
 }
 
