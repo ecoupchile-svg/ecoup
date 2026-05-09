@@ -101,19 +101,38 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
 @api_router.post("/auth/signup", response_model=UserResponse)
 async def signup(request: SignUpRequest):
     try:
-        # Crear cuenta de usuario
-        auth_response = supabase_admin.auth.sign_up({
-            "email": request.email,
-            "password": request.password,
-            "options": {
-                "data": {
+        # Intentar con admin API primero (auto-confirma)
+        try:
+            auth_response = supabase_admin.auth.admin.create_user({
+                "email": request.email,
+                "password": request.password,
+                "email_confirm": True,
+                "user_metadata": {
                     "nombre": request.nombre,
                     "role": request.role
                 }
-            }
-        })
-        
-        user_id = auth_response.user.id
+            })
+            user_id = auth_response.user.id
+        except Exception:
+            # Fallback: usar sign_up regular
+            auth_response = supabase_admin.auth.sign_up({
+                "email": request.email,
+                "password": request.password,
+                "options": {
+                    "data": {
+                        "nombre": request.nombre,
+                        "role": request.role
+                    }
+                }
+            })
+            user_id = auth_response.user.id
+            # Intentar auto-confirmar
+            try:
+                supabase_admin.auth.admin.update_user_by_id(
+                    user_id, {"email_confirm": True}
+                )
+            except Exception:
+                pass
         
         # Crear perfil de usuario en la tabla users
         supabase_admin.table("users").insert({
