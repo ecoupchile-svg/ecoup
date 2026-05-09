@@ -13,7 +13,7 @@ export const BottomNav = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 pb-safe px-6 flex justify-around items-center h-16 sm:h-20 z-50">
+    <div className="fixed bottom-0 w-full max-w-md bg-white border-t border-gray-100 px-6 flex justify-around items-center h-16 sm:h-20 z-[9999]" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0.5rem)' }}>
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
