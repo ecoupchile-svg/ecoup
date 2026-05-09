@@ -24,26 +24,23 @@ export const RequestDetailPage = () => {
   const [rating, setRating] = useState(0);
   const [comentario, setComentario] = useState('');
 
-  useEffect(() => {
-    loadRequestDetail();
-  }, [id]);
+  useEffect(() => { loadRequestDetail(); }, [id]);
 
   const loadRequestDetail = async () => {
     try {
       setLoading(true);
-      const requestResponse = await axios.get(`${API}/requests/${id}`, {
+      const res = await axios.get(`${API}/requests/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setRequest(requestResponse.data);
+      setRequest(res.data);
 
-      // Cargar evidencia si existe
-      if (['EVIDENCE_UPLOADED', 'COMPLETED'].includes(requestResponse.data.status)) {
-        const evidenceResponse = await axios.get(`${API}/evidence/${id}`, {
+      if (['EVIDENCE_UPLOADED', 'COMPLETED'].includes(res.data.status)) {
+        const evRes = await axios.get(`${API}/evidence/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setEvidence(evidenceResponse.data);
+        setEvidence(evRes.data);
       }
-    } catch (error) {
+    } catch {
       toast.error('Error al cargar la solicitud');
       navigate('/home');
     } finally {
@@ -54,119 +51,56 @@ export const RequestDetailPage = () => {
   const handleAccept = async () => {
     setActionLoading(true);
     try {
-      await axios.patch(
-        `${API}/requests/${id}`,
-        { status: 'ACCEPTED', recycler_id: user.id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.patch(`${API}/requests/${id}`, { status: 'ACCEPTED', recycler_id: user.id },
+        { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Solicitud aceptada');
       loadRequestDetail();
-    } catch (error) {
-      toast.error('Error al aceptar la solicitud');
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { toast.error('Error al aceptar'); }
+    finally { setActionLoading(false); }
   };
 
   const handleStartProgress = async () => {
     setActionLoading(true);
     try {
-      await axios.patch(
-        `${API}/requests/${id}`,
-        { status: 'IN_PROGRESS' },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('Recolección iniciada');
+      await axios.patch(`${API}/requests/${id}`, { status: 'IN_PROGRESS' },
+        { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Recoleccion iniciada');
       loadRequestDetail();
-    } catch (error) {
-      toast.error('Error al iniciar la recolección');
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { toast.error('Error'); }
+    finally { setActionLoading(false); }
   };
 
-  const handleUploadEvidence = () => {
-    navigate(`/upload-evidence/${id}`);
-  };
-
-  const handleConfirmEvidence = () => {
-    setShowRatingModal(true);
-  };
+  const handleConfirmEvidence = () => setShowRatingModal(true);
 
   const handleReportProblem = async () => {
     setActionLoading(true);
     try {
-      await axios.patch(
-        `${API}/requests/${id}`,
-        { status: 'IN_PROGRESS' },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('Problema reportado. El reciclador será notificado.');
+      await axios.patch(`${API}/requests/${id}`, { status: 'IN_PROGRESS' },
+        { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Problema reportado. El reciclador sera notificado.');
       loadRequestDetail();
-    } catch (error) {
-      toast.error('Error al reportar el problema');
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { toast.error('Error al reportar'); }
+    finally { setActionLoading(false); }
   };
 
   const handleSubmitRating = async () => {
-    if (rating === 0) {
-      toast.error('Por favor selecciona una calificación');
-      return;
-    }
-
+    if (rating === 0) { toast.error('Selecciona una calificacion'); return; }
     setActionLoading(true);
     try {
-      await axios.post(
-        `${API}/ratings`,
-        {
-          request_id: id,
-          recycler_id: request.recycler_id,
-          rating,
-          comentario: comentario.trim() || null
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('¡Gracias por tu calificación!');
+      await axios.post(`${API}/ratings`, {
+        request_id: id, recycler_id: request.recycler_id, rating,
+        comentario: comentario.trim() || null
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('Gracias por tu calificacion!');
       navigate('/home');
-    } catch (error) {
-      toast.error('Error al enviar la calificación');
-    } finally {
-      setActionLoading(false);
-    }
+    } catch { toast.error('Error al enviar calificacion'); }
+    finally { setActionLoading(false); }
   };
 
-  const getStatusText = (status) => {
-    const statusMap = {
-      'PENDING': 'Pendiente',
-      'ACCEPTED': 'Aceptada',
-      'IN_PROGRESS': 'En progreso',
-      'EVIDENCE_UPLOADED': 'Evidencia subida',
-      'COMPLETED': 'Completada'
-    };
-    return statusMap[status] || status;
-  };
+  const getStatusText = (s) => ({ 'PENDING':'Pendiente','ACCEPTED':'Aceptada','IN_PROGRESS':'En progreso','EVIDENCE_UPLOADED':'Evidencia subida','COMPLETED':'Completada' }[s] || s);
+  const getStatusClass = (s) => ({ 'PENDING':'status-pending','ACCEPTED':'status-accepted','IN_PROGRESS':'status-in-progress','EVIDENCE_UPLOADED':'status-evidence-uploaded','COMPLETED':'status-completed' }[s] || 'status-pending');
 
-  const getStatusClass = (status) => {
-    const statusClasses = {
-      'PENDING': 'status-pending',
-      'ACCEPTED': 'status-accepted',
-      'IN_PROGRESS': 'status-in-progress',
-      'EVIDENCE_UPLOADED': 'status-evidence-uploaded',
-      'COMPLETED': 'status-completed'
-    };
-    return statusClasses[status] || 'status-pending';
-  };
-
-  if (loading) {
-    return (
-      <div className="app-container flex items-center justify-center">
-        <Loader2 size={48} className="text-[#2BBFB3] animate-spin" />
-      </div>
-    );
-  }
-
+  if (loading) return <div className="app-container flex items-center justify-center"><Loader2 size={48} className="text-[#2BBFB3] animate-spin" /></div>;
   if (!request) return null;
 
   const isRecycler = user?.role === 'RECYCLER';
@@ -174,75 +108,45 @@ export const RequestDetailPage = () => {
 
   return (
     <div className="app-container">
-      {/* Header */}
       <div className="bg-white border-b border-gray-100 p-6">
-        <div className="flex items-center gap-4 mb-2">
-          <button
-            data-testid="back-button"
-            onClick={() => navigate('/home')}
-            className="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
+        <div className="flex items-center gap-4">
+          <button data-testid="back-button" onClick={() => navigate('/home')} className="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft size={24} className="text-gray-900" />
           </button>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-            Detalle de solicitud
-          </h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">Detalle</h1>
         </div>
       </div>
 
-      {/* Contenido */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 pb-8">
         {/* Estado */}
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-500">Estado</span>
-            <div className={`status-badge ${getStatusClass(request.status)}`}>
-              {getStatusText(request.status)}
-            </div>
-          </div>
+        <div className="card flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-500">Estado</span>
+          <div className={`status-badge ${getStatusClass(request.status)}`}>{getStatusText(request.status)}</div>
         </div>
 
-        {/* Información de la solicitud */}
-        <div className="card space-y-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <MapPin size={20} className="text-gray-500" />
-              <span className="text-sm font-medium text-gray-500">Dirección</span>
-            </div>
-            <p className="text-base font-semibold text-gray-900">
-              {request.direccion}
-            </p>
+        {/* Info */}
+        <div className="card space-y-3">
+          <h2 className="text-lg font-bold text-gray-900">{request.title}</h2>
+          <div className="flex items-center gap-2">
+            <MapPin size={16} className="text-gray-400" />
+            <span className="text-sm text-gray-600">{request.address}</span>
           </div>
-
-          {request.descripcion && (
-            <div>
-              <span className="text-sm font-medium text-gray-500 block mb-2">Descripción</span>
-              <p className="text-base text-gray-700">
-                {request.descripcion}
-              </p>
-            </div>
+          {request.description && <p className="text-sm text-gray-500">{request.description}</p>}
+          {request.waste_type && (
+            <span className="inline-block px-3 py-1 rounded-lg bg-[#2BBFB3]/10 text-[#2BBFB3] text-xs font-bold">{request.waste_type}</span>
           )}
-
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Clock size={16} />
-            <span>
-              Creada el {format(new Date(request.created_at), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })}
-            </span>
+          <div className="flex items-center gap-2 text-xs text-gray-400 pt-2 border-t border-gray-50">
+            <Clock size={14} />
+            <span>{request.created_at ? format(new Date(request.created_at), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es }) : ''}</span>
           </div>
         </div>
 
         {/* Mapa */}
-        {request.lat && request.lng && (
+        {request.latitude && request.longitude && (
           <div className="card">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Ubicación</h3>
-            <div className="h-[300px]">
-              <MapView
-                lat={request.lat}
-                lng={request.lng}
-                markers={[
-                  { lat: request.lat, lng: request.lng, popup: request.direccion }
-                ]}
-              />
+            <h3 className="text-base font-bold text-gray-900 mb-3">Ubicacion</h3>
+            <div className="h-[250px]">
+              <MapView lat={request.latitude} lng={request.longitude} markers={[{ lat: request.latitude, lng: request.longitude, popup: request.address }]} />
             </div>
           </div>
         )}
@@ -250,134 +154,76 @@ export const RequestDetailPage = () => {
         {/* Evidencia */}
         {evidence.length > 0 && (
           <div className="card space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Evidencia</h3>
+            <h3 className="text-base font-bold text-gray-900">Evidencia</h3>
             {evidence.map((ev) => (
               <div key={ev.id} className="space-y-3">
-                <img
-                  src={ev.photo_url}
-                  alt="Evidencia"
-                  className="w-full rounded-xl"
-                  data-testid="evidence-photo"
-                />
-                <div className="h-[200px]">
-                  <MapView
-                    lat={ev.lat}
-                    lng={ev.lng}
-                    markers={[
-                      { lat: ev.lat, lng: ev.lng, popup: 'Ubicación de evidencia' }
-                    ]}
-                  />
-                </div>
-                <p className="text-sm text-gray-500">
-                  Subida el {format(new Date(ev.uploaded_at), "d 'de' MMM, HH:mm", { locale: es })}
+                <img src={ev.image_url} alt="Evidencia" className="w-full rounded-xl" data-testid="evidence-photo" />
+                {ev.latitude && ev.longitude && (
+                  <div className="h-[180px]">
+                    <MapView lat={ev.latitude} lng={ev.longitude} markers={[{ lat: ev.latitude, lng: ev.longitude, popup: 'Ubicacion de evidencia' }]} />
+                  </div>
+                )}
+                <p className="text-xs text-gray-400">
+                  {ev.created_at ? format(new Date(ev.created_at), "d 'de' MMM, HH:mm", { locale: es }) : ''}
                 </p>
               </div>
             ))}
           </div>
         )}
 
-        {/* Acciones para reciclador */}
+        {/* Acciones reciclador */}
         {isRecycler && (
           <div className="space-y-3">
             {request.status === 'PENDING' && (
-              <button
-                data-testid="accept-request-button"
-                onClick={handleAccept}
-                disabled={actionLoading}
-                className="btn-secondary"
-              >
+              <button data-testid="accept-request-button" onClick={handleAccept} disabled={actionLoading} className="btn-secondary">
                 {actionLoading ? 'Procesando...' : 'Aceptar solicitud'}
               </button>
             )}
-
             {request.status === 'ACCEPTED' && request.recycler_id === user.id && (
-              <button
-                data-testid="start-progress-button"
-                onClick={handleStartProgress}
-                disabled={actionLoading}
-                className="btn-secondary"
-              >
-                {actionLoading ? 'Procesando...' : 'Iniciar recolección'}
+              <button data-testid="start-progress-button" onClick={handleStartProgress} disabled={actionLoading} className="btn-secondary">
+                {actionLoading ? 'Procesando...' : 'Iniciar recoleccion'}
               </button>
             )}
-
             {request.status === 'IN_PROGRESS' && request.recycler_id === user.id && (
-              <button
-                data-testid="upload-evidence-button"
-                onClick={handleUploadEvidence}
-                className="btn-secondary flex items-center justify-center gap-2"
-              >
-                <Camera size={20} />
-                Subir evidencia
+              <button data-testid="upload-evidence-button" onClick={() => navigate(`/upload-evidence/${id}`)} className="btn-secondary flex items-center justify-center gap-2">
+                <Camera size={20} /> Subir evidencia
               </button>
             )}
           </div>
         )}
 
-        {/* Acciones para usuario hogar */}
+        {/* Acciones usuario hogar */}
         {isOwner && request.status === 'EVIDENCE_UPLOADED' && (
           <div className="space-y-3">
-            <button
-              data-testid="confirm-evidence-button"
-              onClick={handleConfirmEvidence}
-              disabled={actionLoading}
-              className="btn-primary flex items-center justify-center gap-2"
-            >
-              <CheckCircle size={20} />
-              Confirmar recolección
+            <button data-testid="confirm-evidence-button" onClick={handleConfirmEvidence} disabled={actionLoading}
+              className="btn-primary flex items-center justify-center gap-2">
+              <CheckCircle size={20} /> Confirmar recoleccion
             </button>
-            <button
-              data-testid="report-problem-button"
-              onClick={handleReportProblem}
-              disabled={actionLoading}
-              className="w-full h-14 rounded-2xl bg-white border-2 border-gray-200 text-gray-900 font-bold text-lg flex items-center justify-center gap-2 active:bg-gray-50"
-            >
-              <AlertCircle size={20} />
-              Reportar problema
+            <button data-testid="report-problem-button" onClick={handleReportProblem} disabled={actionLoading}
+              className="w-full h-14 rounded-2xl bg-white border-2 border-gray-200 text-gray-900 font-bold text-lg flex items-center justify-center gap-2 active:bg-gray-50">
+              <AlertCircle size={20} /> Reportar problema
             </button>
           </div>
         )}
       </div>
 
-      {/* Modal de calificación */}
+      {/* Rating modal */}
       {showRatingModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 slide-up">
-            <h3 className="text-2xl font-extrabold text-gray-900 mb-4">
-              Califica el servicio
-            </h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Tu opinión ayuda a mejorar la comunidad
-            </p>
-
+            <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Califica el servicio</h3>
+            <p className="text-sm text-gray-500 mb-6">Tu opinion ayuda a mejorar la comunidad</p>
             <div className="flex justify-center mb-6">
               <RatingStars value={rating} onChange={setRating} />
             </div>
-
-            <textarea
-              data-testid="input-comentario"
-              value={comentario}
-              onChange={(e) => setComentario(e.target.value)}
-              rows={3}
-              placeholder="Comentario opcional..."
-              className="w-full rounded-xl bg-gray-100 border-transparent px-4 py-3 text-base font-medium text-gray-900 placeholder-gray-500 focus:bg-white focus:border-[#2BBFB3] focus:ring-2 focus:ring-[#2BBFB3]/20 transition-all resize-none mb-4"
-            />
-
+            <textarea data-testid="input-comentario" value={comentario} onChange={(e) => setComentario(e.target.value)} rows={3}
+              placeholder="Comentario opcional..." className="w-full rounded-xl bg-gray-100 border-transparent px-4 py-3 text-base font-medium text-gray-900 placeholder-gray-500 focus:bg-white focus:border-[#2BBFB3] focus:ring-2 focus:ring-[#2BBFB3]/20 transition-all resize-none mb-4" />
             <div className="space-y-3">
-              <button
-                data-testid="submit-rating-button"
-                onClick={handleSubmitRating}
-                disabled={actionLoading}
-                className="btn-primary"
-              >
-                {actionLoading ? 'Enviando...' : 'Enviar calificación'}
+              <button data-testid="submit-rating-button" onClick={handleSubmitRating} disabled={actionLoading} className="btn-primary">
+                {actionLoading ? 'Enviando...' : 'Enviar calificacion'}
               </button>
-              <button
-                data-testid="cancel-rating-button"
-                onClick={() => setShowRatingModal(false)}
-                disabled={actionLoading}
-                className="w-full h-14 rounded-2xl bg-white border-2 border-gray-200 text-gray-900 font-bold text-lg flex items-center justify-center active:bg-gray-50"
-              >
+              <button data-testid="cancel-rating-button" onClick={() => setShowRatingModal(false)} disabled={actionLoading}
+                className="w-full h-14 rounded-2xl bg-white border-2 border-gray-200 text-gray-900 font-bold text-lg flex items-center justify-center active:bg-gray-50">
                 Cancelar
               </button>
             </div>

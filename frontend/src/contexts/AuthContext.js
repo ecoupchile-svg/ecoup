@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import axios from 'axios';
 
 const AuthContext = createContext({});
-
 export const useAuth = () => useContext(AuthContext);
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -15,42 +13,32 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
 
   useEffect(() => {
-    // Verificar sesión actual
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setToken(session.access_token);
-        loadUserProfile(session.access_token);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setToken(session.access_token);
-        loadUserProfile(session.access_token);
-      } else {
-        setUser(null);
-        setToken(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    // Recuperar sesion guardada
+    const savedToken = localStorage.getItem('ecoup_token');
+    const savedUser = localStorage.getItem('ecoup_user');
+    if (savedToken && savedUser) {
+      setToken(savedToken);
+      setUser(JSON.parse(savedUser));
+      // Verificar que el token siga siendo valido
+      verifyToken(savedToken);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
-  const loadUserProfile = async (accessToken) => {
+  const verifyToken = async (accessToken) => {
     try {
       const response = await axios.get(`${API}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
+        headers: { Authorization: `Bearer ${accessToken}` }
       });
       setUser(response.data);
-    } catch (error) {
-      console.error('Error al cargar perfil:', error);
+      localStorage.setItem('ecoup_user', JSON.stringify(response.data));
+    } catch {
+      // Token expirado, limpiar sesion
+      localStorage.removeItem('ecoup_token');
+      localStorage.removeItem('ecoup_user');
       setUser(null);
+      setToken(null);
     } finally {
       setLoading(false);
     }
@@ -58,58 +46,37 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (nombre, email, password, role) => {
     try {
-      const response = await axios.post(`${API}/auth/signup`, {
-        nombre,
-        email,
-        password,
-        role
-      });
-
-      // Iniciar sesión automáticamente después del registro
-      await login(email, password);
-      
-      return { success: true };
+      await axios.post(`${API}/auth/signup`, { nombre, email, password, role });
+      return await login(email, password);
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Error al registrarse' 
-      };
+      return { success: false, error: error.response?.data?.detail || 'Error al registrarse' };
     }
   };
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API}/auth/login`, {
-        email,
-        password
-      });
-
-      setToken(response.data.access_token);
-      setUser(response.data.user);
-      
+      const response = await axios.post(`${API}/auth/login`, { email, password });
+      const { access_token, user: userData } = response.data;
+      setToken(access_token);
+      setUser(userData);
+      localStorage.setItem('ecoup_token', access_token);
+      localStorage.setItem('ecoup_user', JSON.stringify(userData));
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Credenciales inválidas' 
-      };
+      return { success: false, error: error.response?.data?.detail || 'Credenciales invalidas' };
     }
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
     setUser(null);
     setToken(null);
+    localStorage.removeItem('ecoup_token');
+    localStorage.removeItem('ecoup_user');
   };
 
-  const value = {
-    user,
-    token,
-    loading,
-    signup,
-    login,
-    logout
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, token, loading, signup, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
