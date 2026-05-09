@@ -50,8 +50,8 @@ export const CreateRequestPage = () => {
     try {
       await axios.post(`${API}/requests`, {
         title,
-        description: description.trim() || null,
-        waste_type: wasteType || null,
+        description: description.trim() || "",
+        waste_type: wasteType || "",
         address,
         latitude: location?.lat || null,
         longitude: location?.lng || null,
@@ -59,7 +59,8 @@ export const CreateRequestPage = () => {
       toast.success('Solicitud creada exitosamente!');
       navigate('/home');
     } catch (error) {
-      toast.error('Error al crear la solicitud');
+      console.error('Error creating request:', error.response?.data);
+      toast.error(error.response?.data?.detail || 'Error al crear la solicitud');
     } finally {
       setLoading(false);
     }

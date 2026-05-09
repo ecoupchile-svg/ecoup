@@ -190,12 +190,12 @@ async def create_request(request: RequestCreate, authorization: Optional[str] = 
         data = {
             "user_id": user.id,
             "title": request.title,
-            "description": request.description,
-            "waste_type": request.waste_type,
-            "estimated_weight": request.estimated_weight,
+            "description": request.description or "",
+            "waste_type": request.waste_type or "",
             "address": request.address,
-            "latitude": request.latitude,
-            "longitude": request.longitude,
+            "latitude": request.latitude if request.latitude is not None else 0,
+            "longitude": request.longitude if request.longitude is not None else 0,
+            "estimated_weight": request.estimated_weight if request.estimated_weight is not None else 0,
             "status": "PENDING"
         }
         result = supabase_admin.table("requests").insert(data).execute()
